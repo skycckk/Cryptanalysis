@@ -486,7 +486,7 @@ oops:   fprintf(stderr, "\n\nUsage: %s rotors orientation init infile outfile\n\
     }
 
     // filename input check
-    sprintf(infname, argv[4]);
+    sprintf(infname, "%s", argv[4]);
     in = fopen(infname, "r");
     if (in == NULL) {
         fprintf(stderr, "\n\nError opening file %s\nTry again\n\n", infname);
@@ -494,7 +494,7 @@ oops:   fprintf(stderr, "\n\nUsage: %s rotors orientation init infile outfile\n\
     }
 
     // filename output check
-    sprintf(outfname, argv[5]);
+    sprintf(outfname, "%s", argv[5]);
     out = fopen(outfname, "w");
     if (out == NULL) {
         fprintf(stderr, "\n\nError opening file %s\nTry again\n\n", outfname);
@@ -615,4 +615,3 @@ oops:   fprintf(stderr, "\n\nUsage: %s rotors orientation init infile outfile\n\
     fclose(out);
 
 }// end main
-
