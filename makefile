@@ -14,11 +14,11 @@
 #
 # Note: Input file must contain only upper case A thru Z. Spaces are OK in plaintext.
 
-TARGET = Typex
 CC = gcc
 CXX = g++
 RM = rm -f
-SRC = Typex.c
+SRC1 = Typex.c
+TARGET1 = Typex
 
 ROTORS = 71625
 ORIENTATION = 01010
@@ -26,16 +26,38 @@ INIT = ZWABA
 IN_FILE = plain.txt
 OUT_FILE = cipher.txt
 
-PARAMS = $(ROTORS) $(ORIENTATION) $(INIT) $(IN_FILE) $(OUT_FILE)
+SRC2 = compare_cipher.c
+TARGET2 = Verify
 
-.PHONY: all clean run
-all: $(SRC)
-	@$(CC) $(SRC) -o $(TARGET)
+TARGET_CIPHER_FILE = cipher_target.txt
+
+PARAMS1 = $(ROTORS) $(ORIENTATION) $(INIT) $(IN_FILE) $(OUT_FILE)
+PARAMS2 = $(OUT_FILE) $(TARGET_CIPHER_FILE)
+
+RUN_TYPEX = ./$(TARGET1) $(PARAMS1)
+RUN_VERIFY = ./$(TARGET2) $(PARAMS2)
+
+.PHONY: all typex verify clean run
+all: typex verify
+
+typex: $(SRC1)
+	@$(CC) $(SRC1) -o $(TARGET1)
+
+verify: $(SRC2)
+	@$(CC) $(SRC2) -o $(TARGET2)
 
 clean:
 	@$(RM) $(OBJ)
 
 run:
-	@./$(TARGET) $(PARAMS)
+	@clear
+	@$(RUN_TYPEX)
+	@$(RUN_VERIFY)
+
+runTypex:
+	@$(RUN_TYPEX)
+
+runVerify:
+	@$(RUN_VERIFY)
 
 rerun: clean all run
