@@ -354,6 +354,20 @@ void simulator (int init_L, int init_M, int init_R, int init_LS, int init_RS) {
         printf("%c\n", letter[temp]);
 #endif
 		// encryption/decryption result
+        // Reflector <- L <- M <- R <- LS <- RS <- inChar
+        // Reflector -> L -> M -> R -> LS -> RS -> outChar 
+        // int RS_val = RS[init_RS][inChar];
+        // int LS_val = LS[init_LS][RS_val];
+        // int R_val = R[cur_R][LS_val];
+        // int M_val = M[cur_M][R_val];
+        // int L_val = L[cur_L][M_val];
+        // int reflector_val = reflector[L_val];
+        // int L_val_inv = L_inv[cur_L][reflector_val];
+        // int M_val_inv = M_inv[cur_M][L_val_inv];
+        // int R_val_inv = R_inv[cur_R][M_val_inv];
+        // int LS_val_inv = LS_inv[init_LS][R_val_inv];
+        // int RS_val_inv = RS_inv[init_RS][LS_val_inv];
+        // outChar = RS_val_inv;
         outChar = RS_inv[init_RS][LS_inv[init_LS][R_inv[cur_R][M_inv[cur_M][L_inv[cur_L][reflector[L[cur_L][M[cur_M][R[cur_R][LS[init_LS][RS[init_RS][inChar]]]]]]]]]]];
 
 #ifdef PR_STEPS
