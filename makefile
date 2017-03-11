@@ -29,15 +29,22 @@ OUT_FILE = cipher.txt
 SRC2 = compare_cipher.c
 TARGET2 = Verify
 
+SRC3 = find_cycles.cpp
+TARGET3 = Find_cycles
+PERMU_ORDER_FILE = permu_order.txt
+PERMU_ORI_FILE = permu_ori.txt
+
 TARGET_CIPHER_FILE = cipher_target.txt
 
 PARAMS1 = $(ROTORS) $(ORIENTATION) $(INIT) $(IN_FILE) $(OUT_FILE)
 PARAMS2 = $(OUT_FILE) $(TARGET_CIPHER_FILE)
+PARAMS3 = $(IN_FILE) $(TARGET_CIPHER_FILE) $(PERMU_ORDER_FILE) $(PERMU_ORI_FILE)
 
 RUN_TYPEX = ./$(TARGET1) $(PARAMS1)
 RUN_VERIFY = ./$(TARGET2) $(PARAMS2)
+RUN_CYCLE = ./$(TARGET3) $(PARAMS3)
 
-.PHONY: all typex verify clean run
+.PHONY: all typex verify find_cycle clean run
 all: typex verify
 
 typex: $(SRC1)
@@ -45,6 +52,9 @@ typex: $(SRC1)
 
 verify: $(SRC2)
 	@$(CC) $(SRC2) -o $(TARGET2)
+
+find_cycle: $(SRC3)
+	@$(CXX) $(SRC3) -o $(TARGET3)
 
 clean:
 	@$(RM) $(OBJ)
@@ -59,5 +69,8 @@ runTypex:
 
 runVerify:
 	@$(RUN_VERIFY)
+
+runCycle:
+	@$(RUN_CYCLE)
 
 rerun: clean all run
