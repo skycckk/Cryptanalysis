@@ -432,18 +432,6 @@ int main (int argc, const char *argv[])
         cycle_count++;
     }
 
-    for (int i = 0; i < MAX_CYCLE_COUNT; i++)
-    {
-    	int cc = list_step_index_count[i];
-    	if (cc == 0) break;
-
-    	int *step_index_list = list_step_index_list[i];
-    	int *step_ori_list = list_step_ori_list[i];
-
-    	free(aa);
-    	free(bb);
-    }
-
 	int text_len = 200; // total steps (depends on the length of known-plaintext)
 	// all_permu[N][26][2]: each step -> each letter -> forword/reverse
 	int ***all_permu = (int ***)malloc(text_len * sizeof(int **));
@@ -455,6 +443,18 @@ int main (int argc, const char *argv[])
 	}
 
 	generate_permutations(all_permu, text_len);
+
+    for (int i = 0; i < MAX_CYCLE_COUNT; i++)
+    {
+    	int cc = list_step_index_count[i];
+    	if (cc == 0) break;
+
+    	int *step_index_list = list_step_index_list[i];
+    	int *step_ori_list = list_step_ori_list[i];
+
+    	free(aa);
+    	free(bb);
+    }	
 
 	for (int i = 0; i < text_len; i++)
 	{
