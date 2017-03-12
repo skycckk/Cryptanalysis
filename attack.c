@@ -322,7 +322,7 @@ void simulator (int init_L, int init_M, int init_R, int init_LS, int init_RS, in
 
 }// end simulator
 
-void generate_permutations()
+void generate_permutations(int ***all_permu, const int text_len)
 {
 	// Initial setting: 
 	// rotors index from 0 ~ 7
@@ -346,8 +346,87 @@ void generate_permutations()
 	ort[3] = 0;
 	ort[4] = 0;
 
-	// text
-	int text_len = 60; // total steps (depends on the length of known-plaintext)
+	initRotors(numL, numM, numR, numLS, numRS);
+
+	for (int i = 0; i < 26; i++) // all letters
+		simulator(init_L, init_M, init_R, init_LS, init_RS, letter[i], text_len, all_permu);
+}
+
+int main (int argc, const char *argv[])
+{
+	if (argc < 3)
+	{
+		fprintf(stderr, "Usage: %s permu_order_file permu_ori_file\n", argv[0]);
+		exit(0);
+	}
+
+	// read all cycles and orientation
+	FILE *file_permu_order = fopen(argv[1], "r");
+	FILE *file_permu_ori = fopen(argv[2], "r");
+	char *line = NULL;
+    size_t len = 0;
+    size_t read;
+
+    // read permutation step index
+	while ((read = getline(&line, &len, file_permu_order)) != -1)
+    {
+    	char *line_tmp = (char *)malloc(len * sizeof(char));
+    	memcpy(line_tmp, line, len * sizeof(char));
+        char *pch = strtok(line, " ");
+        int step_count1 = 0;
+        while (pch != NULL)
+        {
+        	if (strcmp(pch, "\n") == 0) break;
+        	step_count1++;
+        	pch = strtok(NULL, " ");
+        }
+        
+        int *step_index = (int *)malloc(step_count1 * sizeof(int));
+        pch = strtok(line_tmp, " ");
+        step_count1 = 0;
+        while (pch != NULL)
+        {
+        	if (strcmp(pch, "\n") == 0) break;
+        	step_index[step_count1++] = atoi(pch);
+        	pch = strtok(NULL, " ");
+        }
+        free(line_tmp);
+
+        // read permutation orientation
+        int step_ori_size = 0;
+        if ((read = getline(&line, &len, file_permu_ori)) != -1)
+        {
+        	char *line_tmp = (char *)malloc(len * sizeof(char));
+    		memcpy(line_tmp, line, len * sizeof(char));
+        	char *pch = strtok(line, " ");
+        	int step_count2 = 0;
+        	while (pch != NULL)
+        	{
+        		if (strcmp(pch, "\n") == 0) break;
+        		step_count2++;
+        		pch = strtok(NULL, " ");
+       		}
+
+       		if (step_count1 != step_count2) { fprintf(stderr, "incorrect file format!\n"); exit(0); }
+
+       		int *step_ori = (int *)malloc(step_count2 * sizeof(int));
+       		pch = strtok(line_tmp, " ");
+        	step_count2 = 0;
+        	while (pch != NULL)
+        	{
+        		if (strcmp(pch, "\n") == 0) break;
+        		step_ori[step_count2++] = atoi(pch);
+        		pch = strtok(NULL, " ");
+       		}	
+       		free(line_tmp);
+
+
+       		free(step_ori);
+        }
+        free(step_index);
+    }
+
+	int text_len = 200; // total steps (depends on the length of known-plaintext)
 	// all_permu[N][26][2]: each step -> each letter -> forword/reverse
 	int ***all_permu = (int ***)malloc(text_len * sizeof(int **));
 	for (int i = 0; i < text_len; i++)
@@ -357,11 +436,8 @@ void generate_permutations()
 			all_permu[i][j] = (int *)malloc(2 * sizeof(int));
 	}
 
-	initRotors(numL, numM, numR, numLS, numRS);
+	generate_permutations(all_permu, text_len);
 
-	for (int i = 0; i < 26; i++) // all letters
-		simulator(init_L, init_M, init_R, init_LS, init_RS, letter[i], text_len, all_permu);
-	
 	for (int i = 0; i < text_len; i++)
 	{
 		for (int j = 0; j < 26; j++)
@@ -373,12 +449,7 @@ void generate_permutations()
 		all_permu[i] = NULL;
 	}
 	free(all_permu);
-	all_permu = NULL;	
-}
-
-int main (int argc, const char *argv[])
-{
-	generate_permutations();
+	all_permu = NULL;		
 
 	return 0;
 }
