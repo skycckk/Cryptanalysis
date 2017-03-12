@@ -367,6 +367,13 @@ int main (int argc, const char *argv[])
     size_t len = 0;
     size_t read;
 
+	// max to 200 cycles
+	cont int MAX_CYCLE_COUNT = 200;
+    int cycle_count = 0;
+    int list_step_index_count[MAX_CYCLE_COUNT] = {0};
+    int *list_step_index_list[MAX_CYCLE_COUNT]; 
+    int *list_step_ori_list[MAX_CYCLE_COUNT];
+
     // read permutation step index
 	while ((read = getline(&line, &len, file_permu_order)) != -1)
     {
@@ -391,6 +398,8 @@ int main (int argc, const char *argv[])
         	pch = strtok(NULL, " ");
         }
         free(line_tmp);
+        list_step_index_list[cycle_count] = step_index;
+        list_step_index_count[cycle_count] = step_count1;
 
         // read permutation orientation
         int step_ori_size = 0;
@@ -408,7 +417,6 @@ int main (int argc, const char *argv[])
        		}
 
        		if (step_count1 != step_count2) { fprintf(stderr, "incorrect file format!\n"); exit(0); }
-
        		int *step_ori = (int *)malloc(step_count2 * sizeof(int));
        		pch = strtok(line_tmp, " ");
         	step_count2 = 0;
@@ -419,11 +427,21 @@ int main (int argc, const char *argv[])
         		pch = strtok(NULL, " ");
        		}	
        		free(line_tmp);
-
-
-       		free(step_ori);
+        	list_step_ori_list[cycle_count] = step_ori;
         }
-        free(step_index);
+        cycle_count++;
+    }
+
+    for (int i = 0; i < MAX_CYCLE_COUNT; i++)
+    {
+    	int cc = list_step_index_count[i];
+    	if (cc == 0) break;
+
+    	int *step_index_list = list_step_index_list[i];
+    	int *step_ori_list = list_step_ori_list[i];
+
+    	free(aa);
+    	free(bb);
     }
 
 	int text_len = 200; // total steps (depends on the length of known-plaintext)
