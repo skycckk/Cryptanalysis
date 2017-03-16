@@ -3,6 +3,8 @@
 #include <string.h>
 #include <time.h>
 
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+
 typedef int bool;
 #define true 1
 #define false 0
@@ -390,6 +392,7 @@ int main (int argc, const char *argv[])
 	// max to 200 cycles
 	const int MAX_CYCLE_COUNT = 200;
     int cycle_count = 0;
+    int max_step_index = 0;
     int list_step_index_count[MAX_CYCLE_COUNT];
     int *list_step_index_list[MAX_CYCLE_COUNT]; 
     int *list_step_ori_list[MAX_CYCLE_COUNT];
@@ -415,7 +418,10 @@ int main (int argc, const char *argv[])
         while (pch != NULL)
         {
         	if (strcmp(pch, "\n") == 0) break;
-        	step_index[step_count1++] = atoi(pch);
+            int index = atoi(pch);
+        	step_index[step_count1++] = index;
+            max_step_index = MAX(max_step_index, index + 1);
+            
         	pch = strtok(NULL, " ");
         }
         free(line_tmp);
@@ -453,10 +459,11 @@ int main (int argc, const char *argv[])
         cycle_count++;
     }
 
-	int text_len = 200; // total steps (depends on the length of known-plaintext)
+    const int MAX_TEXT_LEN = 200;
+    if (max_step_index > MAX_TEXT_LEN - 1) {fprintf(stderr, "Error! Text length is excceed\n"); exit(1);}
 	// all_permu[N][26][2]: each step -> each letter -> forword/reverse
-	int ***all_permu = (int ***)malloc(text_len * sizeof(int **));
-	for (int i = 0; i < text_len; i++)
+	int ***all_permu = (int ***)malloc(MAX_TEXT_LEN * sizeof(int **));
+	for (int i = 0; i < MAX_TEXT_LEN; i++)
 	{
 		all_permu[i] = (int **)malloc(26 * sizeof(int *));
 		for (int j = 0; j < 26; j++) 
@@ -510,7 +517,7 @@ int main (int argc, const char *argv[])
 
                         // kernal part: this will go through all settings
                         // total work = 336 * 8 * 2 ^ 14 = 2 ^ 25.4
-						generate_permutations(all_permu, text_len, permu_buf[rot_i], init_LMS, init_ort[ort_i]);
+						generate_permutations(all_permu, max_step_index, permu_buf[rot_i], init_LMS, init_ort[ort_i]);
 						for (int i = 0; i < 26; i++) // each guessing pair letter
 						{
 							bool cycle_has_hold = true;
@@ -569,7 +576,7 @@ int main (int argc, const char *argv[])
     	free(step_ori_list);
     }	
 
-	for (int i = 0; i < text_len; i++)
+	for (int i = 0; i < MAX_TEXT_LEN; i++)
 	{
 		for (int j = 0; j < 26; j++)
 		{
