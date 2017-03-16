@@ -254,13 +254,11 @@ void initRotors (int numL, int numM, int numR, int numLS, int numRS)
     }
 }// end initRotors
 
-void simulator (int init_L, int init_M, int init_R, int init_LS, int init_RS, int ch, int text_len, int ***permu_table)
+void simulator (int init_L, int init_M, int init_R, int init_LS, int init_RS, int text_len, int ***permu_table)
 {
 	// permu_table[text_len][26][2]: each step -> letter -> forward/reverse
     int i,
 		cnt,
-        space,
-        temp,
         cur_L,
         cur_M,
         cur_R,
@@ -282,23 +280,6 @@ void simulator (int init_L, int init_M, int init_R, int init_LS, int init_RS, in
     // encryption/decryption and stepping part
     // following is the permutation of each step i to text_len steps
     while (cnt < text_len) {
-        temp = ch;
-
-        space = temp;
-        temp -= 65;
-        space -= 32;
-		// convert space to X
-        if (space == 0) {
-            temp = 23;
-        }
-		// validate input
-        if (temp < 0 || temp > 25) {
-            fprintf(stderr, "\nError (%d) --- all input characters must be upper case A thru Z or a space\n", cnt);
-            exit(0);
-        }
-
-        inChar = (unsigned char)temp;
-
         // check all possible notches
         for (i = 0; i < 9; ++i) {
             // all 3 step (step left and middle here)
@@ -344,13 +325,18 @@ void simulator (int init_L, int init_M, int init_R, int init_LS, int init_RS, in
 		// encryption/decryption result
         // Reflector <- L <- M <- R <- LS <- RS <- inChar
         // Reflector -> L -> M -> R -> LS -> RS -> outChar
-        outChar = RS_inv[init_RS][LS_inv[init_LS][R_inv[cur_R][M_inv[cur_M][L_inv[cur_L][reflector[L[cur_L][M[cur_M][R[cur_R][LS[init_LS][RS[init_RS][inChar]]]]]]]]]]];
-        permu_table[cnt][temp][0] = outChar;
-        // printf("%c", letter[outChar]);
+        int validate_cnt = 0;
+        for (int i = 0; i < 26; i++) // every letters
+        {
+            inChar = (unsigned char)i;
+            outChar = RS_inv[init_RS][LS_inv[init_LS][R_inv[cur_R][M_inv[cur_M][L_inv[cur_L][reflector[L[cur_L][M[cur_M][R[cur_R][LS[init_LS][RS[init_RS][inChar]]]]]]]]]]];    
+            
+            permu_table[cnt][i][0] = outChar;
+            permu_table[cnt][outChar][1] = i; // inverse one
 
-		outChar = RS[init_RS][LS[init_LS][R[cur_R][M[cur_M][L[cur_L][reflector[L_inv[cur_L][M_inv[cur_M][R_inv[cur_R][LS_inv[init_LS][RS_inv[init_RS][inChar]]]]]]]]]]];        
-		permu_table[cnt][temp][1] = outChar;
-        // printf("%c", letter[outChar]);
+            validate_cnt += outChar;
+        }
+        if (validate_cnt != 325) {fprintf(stderr, "ERROR!! Duplicated letters\n"); exit(1);}
 
         cnt++;
     }// end while
@@ -383,9 +369,7 @@ void generate_permutations(int ***all_permu, const int text_len, int *rotor_inde
 	ort[4] = 0; // fix
 
 	initRotors(numL, numM, numR, numLS, numRS);
-
-	for (int i = 0; i < 26; i++) // all letters
-		simulator(init_L, init_M, init_R, init_LS, init_RS, letter[i], text_len, all_permu);
+	simulator(init_L, init_M, init_R, init_LS, init_RS, text_len, all_permu);
 }
 
 int main (int argc, const char *argv[])
