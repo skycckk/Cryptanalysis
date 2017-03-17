@@ -10,6 +10,8 @@ typedef int bool;
 #define true 1
 #define false 0
 
+#define MAX_USING_CYCLE 10
+
 static int permute_count = 0;
 
 int Lrotor[26],
@@ -395,17 +397,22 @@ int main (int argc, const char *argv[])
 	const int MAX_CYCLE_COUNT = 200;
     int cycle_count = 0;
     int max_step_index = 0;
-    int list_step_index_count[MAX_CYCLE_COUNT];
-    int *list_step_index_list[MAX_CYCLE_COUNT]; 
-    int *list_step_ori_list[MAX_CYCLE_COUNT];
+    int list_step_index_count[26][MAX_CYCLE_COUNT]; // starting letter -> cycle index
+    int *list_step_index_list[26][MAX_CYCLE_COUNT]; 
+    int *list_step_ori_list[26][MAX_CYCLE_COUNT];
+    int desired_cycle_count[26] = {0};
+    char prev_start_letter = 0xff;
 
     // read permutation step-index
 	while ((read = getline(&line, &len, file_permu_order)) != -1)
     {
+        if (cycle_count > MAX_CYCLE_COUNT) {fprintf(stderr, "Error excceed cycles!\n"); exit(1);};
+
         // pre-calculate size
     	char *line_tmp = (char *)malloc(len * sizeof(char));
     	memcpy(line_tmp, line, len * sizeof(char));
         char *pch = strtok(line, " ");
+        pch = strtok(NULL, " "); // skip the first letter indicater
         int step_count1 = 0;
         while (pch != NULL)
         {
@@ -416,6 +423,10 @@ int main (int argc, const char *argv[])
         
         int *step_index = (int *)malloc(step_count1 * sizeof(int));
         pch = strtok(line_tmp, " ");
+        int start_letter = *pch - 'A';
+        if (start_letter != prev_start_letter) {cycle_count = 0; prev_start_letter = start_letter;}
+
+        pch = strtok(NULL, " ");
         step_count1 = 0;
         while (pch != NULL)
         {
@@ -427,8 +438,9 @@ int main (int argc, const char *argv[])
         	pch = strtok(NULL, " ");
         }
         free(line_tmp);
-        list_step_index_list[cycle_count] = step_index;
-        list_step_index_count[cycle_count] = step_count1;
+        list_step_index_list[start_letter][cycle_count] = step_index;
+        list_step_index_count[start_letter][cycle_count] = step_count1;
+        desired_cycle_count[start_letter] = MIN(cycle_count, MAX_USING_CYCLE);
 
         // read permutation orientation
         int step_ori_size = 0;
@@ -437,6 +449,7 @@ int main (int argc, const char *argv[])
         	char *line_tmp = (char *)malloc(len * sizeof(char));
     		memcpy(line_tmp, line, len * sizeof(char));
         	char *pch = strtok(line, " ");
+            pch = strtok(NULL, " ");
         	int step_count2 = 0;
         	while (pch != NULL)
         	{
@@ -448,6 +461,7 @@ int main (int argc, const char *argv[])
        		if (step_count1 != step_count2) { fprintf(stderr, "incorrect file format!\n"); exit(0); }
        		int *step_ori = (int *)malloc(step_count2 * sizeof(int));
        		pch = strtok(line_tmp, " ");
+            pch = strtok(NULL, " ");
         	step_count2 = 0;
         	while (pch != NULL)
         	{
@@ -456,11 +470,10 @@ int main (int argc, const char *argv[])
         		pch = strtok(NULL, " ");
        		}	
        		free(line_tmp);
-        	list_step_ori_list[cycle_count] = step_ori;
+        	list_step_ori_list[start_letter][cycle_count] = step_ori;
         }
         cycle_count++;
     }
-    int desired_cycle_count = MIN(cycle_count, 10);
 
     const int MAX_TEXT_LEN = 200;
     if (max_step_index > MAX_TEXT_LEN - 1) {fprintf(stderr, "Error! Text length is excceed\n"); exit(1);}
@@ -492,94 +505,105 @@ int main (int argc, const char *argv[])
 	int init_ort[8][3] = {{0,0,0}, {0,0,1}, {0,1,0}, {0,1,1},
 						  {1,0,0}, {1,0,1}, {1,1,0}, {1,1,1}};
 
-    // 8 choose 3 with permutation
-	for (int rot_i = 0; rot_i < total_permu; rot_i++)
-	{	
-		if (rot_i % 120 != 0) continue;
+    for (int sl = 0; sl < 26; sl++)
+    {
+        int using_cycle_count = desired_cycle_count[sl];
+        if (using_cycle_count < 1) continue;
 
-		for (int i = 0; i < 3; i++) printf("%d ", permu_buf[rot_i][i]);
-		printf(" -> rot_i = %d\n", rot_i);
+        // 8 choose 3 with permutation
+        for (int rot_i = 0; rot_i < total_permu; rot_i++)
+        {   
+            if (rot_i % 120 != 0) continue;
 
-        // all possible initial letter: total = 26 * 26 * 26 = 2 ^ 14
-        fprintf(stderr, "rotor_i0:");
-		for (int rotor_i0 = 0; rotor_i0 < 26; rotor_i0++)
-		{
-            fprintf(stderr, " %d", rotor_i0);
-			for (int rotor_i1 = 0; rotor_i1 < 26; rotor_i1++)
-			{
-				for (int rotor_i2 = 0; rotor_i2 < 26; rotor_i2++)
-				{
-                    // possible orientation
-                    // clock_t start_t = clock();
-					for (int ort_i = 0; ort_i < 8; ort_i++)
-					{
-						int init_LMS[3] = {0};
-						init_LMS[0] = rotor_i0;
-						init_LMS[1] = rotor_i1;
-						init_LMS[2] = rotor_i2;
+            printf("%c ", sl + 'A');
+            for (int i = 0; i < 3; i++) printf("%d ", permu_buf[rot_i][i]);
+            printf(" -> rot_i = %d\n", rot_i);
 
-                        // kernal part: this will go through all settings
-                        // total work = 336 * 8 * 2 ^ 14 = 2 ^ 25.4
-						generate_permutations(all_permu, max_step_index, permu_buf[rot_i], init_LMS, init_ort[ort_i]);
-						for (int i = 0; i < 26; i++) // each guessing pair letter
-						{
-							bool cycle_has_hold = true;
-							for (int j = 0; j < desired_cycle_count; j++) // each cycle
-							{
-								int next = i;
-					    		int cc = list_step_index_count[j];
-		    					if (cc == 0) break;
+            // all possible initial letter: total = 26 * 26 * 26 = 2 ^ 14
+            fprintf(stderr, "rotor_i0:");
+            for (int rotor_i0 = 0; rotor_i0 < 26; rotor_i0++)
+            {
+                fprintf(stderr, " %d", rotor_i0);
+                for (int rotor_i1 = 0; rotor_i1 < 26; rotor_i1++)
+                {
+                    for (int rotor_i2 = 0; rotor_i2 < 26; rotor_i2++)
+                    {
+                        // possible orientation
+                        // clock_t start_t = clock();
+                        for (int ort_i = 0; ort_i < 8; ort_i++)
+                        {
+                            int init_LMS[3] = {0};
+                            init_LMS[0] = rotor_i0;
+                            init_LMS[1] = rotor_i1;
+                            init_LMS[2] = rotor_i2;
 
-		    					int *step_index_list = list_step_index_list[j];
-		    					int *step_ori_list = list_step_ori_list[j];
+                            // kernal part: this will go through all settings
+                            // total work = 336 * 8 * 2 ^ 14 = 2 ^ 25.4
+                            generate_permutations(all_permu, max_step_index, permu_buf[rot_i], init_LMS, init_ort[ort_i]);
+                            for (int i = 0; i < 26; i++) // each guessing pair letter
+                            {
+                                bool cycle_has_hold = true;
+                                for (int j = 0; j < using_cycle_count; j++) // each cycle
+                                {
+                                    int next = i;
+                                    int cc = list_step_index_count[sl][j];
+                                    if (cc == 0) break;
 
-		    					for (int k = 0; k < cc; k++)
-		    					{
-		    						int step = step_index_list[k];
-		    						int step_ori = step_ori_list[k];
-		    						next = all_permu[step][next][step_ori];
-		    					}
-		    					if (next != i) cycle_has_hold = cycle_has_hold & false;
-							}
+                                    int *step_index_list = list_step_index_list[sl][j];
+                                    int *step_ori_list = list_step_ori_list[sl][j];
 
-							if (cycle_has_hold)
-							{
-								for (int k = 0; k < 5; k++) fprintf(file_output_key, "%d", permu_buf[rot_i][k]);
-                                fprintf(file_output_key, " ");
+                                    for (int k = 0; k < cc; k++)
+                                    {
+                                        int step = step_index_list[k];
+                                        int step_ori = step_ori_list[k];
+                                        next = all_permu[step][next][step_ori];
+                                    }
+                                    if (next != i) cycle_has_hold = cycle_has_hold & false;
+                                }
 
-								for (int k = 0; k < 3; k++) fprintf(file_output_key, "%d", init_ort[ort_i][k]);
-                                fprintf(file_output_key, " ");
+                                if (cycle_has_hold)
+                                {
+                                    for (int k = 0; k < 5; k++) fprintf(file_output_key, "%d", permu_buf[rot_i][k]);
+                                    fprintf(file_output_key, " ");
 
-                                fprintf(file_output_key, "%c%c%c ", rotor_i0 + 'A', rotor_i1 + 'A', rotor_i2 + 'A');
-                                fprintf(file_output_key, "%c->%c\n", 'A', i + 'A');
+                                    for (int k = 0; k < 3; k++) fprintf(file_output_key, "%d", init_ort[ort_i][k]);
+                                    fprintf(file_output_key, " ");
 
-                                fflush(file_output_key);
-							} 
-						}	
-					}	
-                    // clock_t end_t = clock();
-                    // double total_t = (double)(end_t - start_t) / (CLOCKS_PER_SEC / 1000.0);
-                    // printf("Total time taken by CPU: %f\n", total_t);	
-				}
-			}	
-		}
-        fprintf(stderr, "\n");
-	}				
+                                    fprintf(file_output_key, "%c%c%c ", rotor_i0 + 'A', rotor_i1 + 'A', rotor_i2 + 'A');
+                                    fprintf(file_output_key, "%c->%c\n", sl + 'A', i + 'A');
+
+                                    fflush(file_output_key);
+                                } 
+                            }   
+                        }   
+                        // clock_t end_t = clock();
+                        // double total_t = (double)(end_t - start_t) / (CLOCKS_PER_SEC / 1000.0);
+                        // printf("Total time taken by CPU: %f\n", total_t);    
+                    }
+                }   
+            }
+            fprintf(stderr, "\n");
+        }        
+    }
+				
 
 	for (int i = 0; i < total_permu; i++) free(permu_buf[i]);
 	free(permu_buf);	
 
-    for (int i = 0; i < MAX_CYCLE_COUNT; i++)
+    for (int sl = 0; sl < 1; sl++)
     {
-    	int cc = list_step_index_count[i];
-    	if (cc == 0) break;
+        for (int i = 0; i < MAX_CYCLE_COUNT; i++)
+        {
+            int cc = list_step_index_count[sl][i];
+            if (cc == 0) break;
 
-    	int *step_index_list = list_step_index_list[i];
-    	int *step_ori_list = list_step_ori_list[i];
+            int *step_index_list = list_step_index_list[sl][i];
+            int *step_ori_list = list_step_ori_list[sl][i];
 
-    	free(step_index_list);
-    	free(step_ori_list);
-    }	
+            free(step_index_list);
+            free(step_ori_list);
+        }   
+    }
 
 	for (int i = 0; i < MAX_TEXT_LEN; i++)
 	{
