@@ -4,6 +4,7 @@
 #include <time.h>
 
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 typedef int bool;
 #define true 1
@@ -376,15 +377,16 @@ void generate_permutations(int ***all_permu, const int text_len, int *rotor_inde
 
 int main (int argc, const char *argv[])
 {
-	if (argc < 3)
+	if (argc < 4)
 	{
-		fprintf(stderr, "Usage: %s permu_order_file permu_ori_file\n", argv[0]);
+		fprintf(stderr, "Usage: %s permu_order_file permu_ori_file key_output\n", argv[0]);
 		exit(0);
 	}
 
 	// read all cycles and orientation
 	FILE *file_permu_order = fopen(argv[1], "r");
 	FILE *file_permu_ori = fopen(argv[2], "r");
+    FILE *file_output_key = fopen(argv[3], "w");
 	char *line = NULL;
     size_t len = 0;
     size_t read;
@@ -458,6 +460,7 @@ int main (int argc, const char *argv[])
         }
         cycle_count++;
     }
+    int desired_cycle_count = MIN(cycle_count, 10);
 
     const int MAX_TEXT_LEN = 200;
     if (max_step_index > MAX_TEXT_LEN - 1) {fprintf(stderr, "Error! Text length is excceed\n"); exit(1);}
@@ -521,7 +524,7 @@ int main (int argc, const char *argv[])
 						for (int i = 0; i < 26; i++) // each guessing pair letter
 						{
 							bool cycle_has_hold = true;
-							for (int j = 0; j < 10; j++) // each cycle
+							for (int j = 0; j < desired_cycle_count; j++) // each cycle
 							{
 								int next = i;
 					    		int cc = list_step_index_count[j];
@@ -541,14 +544,16 @@ int main (int argc, const char *argv[])
 
 							if (cycle_has_hold)
 							{
-								printf("************************************\n");
-								printf("Putative rotor setting was found! %c\n", (i + 65));	
-								printf("rot_index:");
-								for (int k = 0; k < 5; k++) printf(" %d", permu_buf[rot_i][k]);
-								printf("\ninit_ort:");
-								for (int k = 0; k < 3; k++) printf(" %d", init_ort[ort_i][k]);
-								printf("\n");
-								printf("init_LMS = (%d, %d, %d)\n", rotor_i0, rotor_i1, rotor_i2);
+								for (int k = 0; k < 5; k++) fprintf(file_output_key, "%d", permu_buf[rot_i][k]);
+                                fprintf(file_output_key, " ");
+
+								for (int k = 0; k < 3; k++) fprintf(file_output_key, "%d", init_ort[ort_i][k]);
+                                fprintf(file_output_key, " ");
+
+                                fprintf(file_output_key, "%c%c%c ", rotor_i0 + 'A', rotor_i1 + 'A', rotor_i2 + 'A');
+                                fprintf(file_output_key, "%c->%c\n", 'A', i + 'A');
+
+                                fflush(file_output_key);
 							} 
 						}	
 					}	
@@ -587,7 +592,11 @@ int main (int argc, const char *argv[])
 		all_permu[i] = NULL;
 	}
 	free(all_permu);
-	all_permu = NULL;		
+	all_permu = NULL;	
+
+    fclose(file_permu_order);
+    fclose(file_permu_ori);
+    fclose(file_output_key);
 
 	return 0;
 }
