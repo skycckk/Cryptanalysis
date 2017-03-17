@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <vector>
 
-#define PRINT_ADJ_LIST
+#undef PRINT_ADJ_LIST
 
 bool demo_mode = false;
 std::vector< std::vector<int> > result;
@@ -24,7 +24,9 @@ char* readCiphertext(const char *file_path, int &out_len)
         if ((new_c >= 'a' && new_c <= 'z') || (new_c >= 'A' && new_c <= 'Z') || (new_c == ' '))
         {
         	len++;
+#ifdef PRINT_ADJ_LIST            
         	printf("(%c, %d)\n", new_c, len);
+#endif
         }
     }
 
@@ -146,13 +148,73 @@ void construct_cycle(char starting_letter, char *plain, char *cipher, int text_l
 #endif	
 }
 
+void find_pair_write_to_file(char *plain, char *cipher, int text_len, FILE *out_order, FILE *out_ori)
+{
+    // from each cycle, calculate directions from pairs
+    // output:
+    //   permu_order: which permutation (Pi) from inChar to outChar
+    //   permu_ori: 0 indicates forward, 1 indicates inverse from inChar to outChar
+    // example:
+    //    index: 0 1 2 3 4 5
+    //   inChar: A A A C D E
+    //  outChar: B C D B C D
+    //  Cycle from 'C': C->B->A->D->C would output
+    //  permu_order:  3  0  2  4
+    //    permu_ori:  0  1  0  1     
+    for (int i = 0; i < result.size(); i++)
+    {
+        std::vector<int> cycle = result[i];
+        int cycle_size = (int)cycle.size();
+        if (cycle_size <= 3) continue;
+
+        int total_permu = cycle_size - 1;
+        int *permu_order = new int[total_permu];
+        int *permu_ori = new int[total_permu];
+        for (int j = 0; j < cycle_size - 1; j++)
+        {
+            // letter pair
+            int letter1 = cycle[j];
+            int letter2 = cycle[j + 1];
+
+            for (int k = 0; k < text_len; k++)
+            {
+                int ori = -1;
+                if ((plain[k] - 65) == letter1 && (cipher[k] - 65) == letter2)
+                    ori = 0;
+                else if ((plain[k] - 65) == letter2 && (cipher[k] - 65) == letter1)
+                    ori = 1;
+
+                // pair found
+                if (ori != -1)
+                {
+                    permu_ori[j] = ori;
+                    permu_order[j] = k;
+
+                    fprintf(out_order, "%d ", k);
+                    fprintf(out_ori, "%d ", ori);
+                    break;
+                }
+            }
+        }
+        fprintf(out_order, "\n");
+        fprintf(out_ori, "\n");
+
+#ifdef PRINT_ADJ_LIST
+        for (int j = 0; j < total_permu; j++) printf("(%d, %d) ", permu_order[j], permu_ori[j]);
+        printf("\n");
+#endif
+        delete[] permu_order;
+        delete[] permu_ori;
+    }    
+}
+
 int main(int argc, const char *argv[])
 {
 	char outfname_order[100];
     char outfname_ori[100];
 	if (argc < 5)
 	{
-		fprintf(stderr, "\n\nUsage: %s infile_in infile_out outfile_order outfile_ori\n\n", argv[0]);
+		fprintf(stderr, "\n\nUsage: %s infile_in infile_out outfile_order outfile_ori start_letter\n\n", argv[0]);
 		fprintf(stderr, "\n\nUsing demo mode...\n\n");
 		demo_mode = true;
 	}
@@ -160,6 +222,8 @@ int main(int argc, const char *argv[])
 	int text_len = 0;
 	char *plain = NULL;
 	char *cipher = NULL;
+    char start_letter = 'A';
+    bool is_auto_mode = false; // run all letters from A to Z
 	if (!demo_mode)
 	{
 		char infname_in[100];
@@ -168,7 +232,10 @@ int main(int argc, const char *argv[])
 		sprintf(infname_out, "%s", argv[2]);
 
 		sprintf(outfname_order, "%s", argv[3]);
-		sprintf(outfname_ori, "%s", argv[4]);		
+		sprintf(outfname_ori, "%s", argv[4]);
+
+        if (argc > 5) memcpy(&start_letter, argv[5], sizeof(char));
+        else is_auto_mode = true;
 
 		int text_in_len, text_out_len;
 		text_in_len = text_out_len = 0;
@@ -194,71 +261,29 @@ int main(int argc, const char *argv[])
 		sprintf(outfname_order, "%s", "demo_permu_order.txt");
 		sprintf(outfname_ori, "%s", "demo_permu_ori.txt");
 	}
-	construct_cycle('A', plain, cipher, text_len);
-	// from each cycle, calculate directions from pairs
-	// output:
-	//   permu_order: which permutation (Pi) from inChar to outChar
-	//   permu_ori: 0 indicates forward, 1 indicates inverse from inChar to outChar
-	// example:
-	//    index: 0 1 2 3 4 5
-	//   inChar: A A A C D E
-	//  outChar: B C D B C D
-	//  Cycle from 'C': C->B->A->D->C would output
-	//  permu_order:  3  0  2  4
-	//    permu_ori:  0  1  0  1  
-	FILE *out_permu_oder = fopen(outfname_order, "w");
-	FILE *out_permu_ori = fopen(outfname_ori, "w");
-	if (out_permu_oder == NULL || out_permu_ori == NULL)
-	{
+
+    FILE *out_permu_oder = fopen(outfname_order, "w");
+    FILE *out_permu_ori = fopen(outfname_ori, "w");
+    if (out_permu_oder == NULL || out_permu_ori == NULL)
+    {
         fprintf(stderr, "\n\nError opening file. Try again\n\n");
         return 0;
     }
 
-	for (int i = 0; i < result.size(); i++)
-	{
-		std::vector<int> cycle = result[i];
-		int cycle_size = (int)cycle.size();
-		if (cycle_size <= 3) continue;
-
-		int total_permu = cycle_size - 1;
-		int *permu_order = new int[total_permu];
-		int *permu_ori = new int[total_permu];
-		for (int j = 0; j < cycle_size - 1; j++)
-		{
-			// letter pair
-			int letter1 = cycle[j];
-			int letter2 = cycle[j + 1];
-
-			for (int k = 0; k < text_len; k++)
-			{
-				int ori = -1;
-				if ((plain[k] - 65) == letter1 && (cipher[k] - 65) == letter2)
-					ori = 0;
-				else if ((plain[k] - 65) == letter2 && (cipher[k] - 65) == letter1)
-					ori = 1;
-
-				// pair found
-				if (ori != -1)
-				{
-					permu_ori[j] = ori;
-					permu_order[j] = k;
-
-					fprintf(out_permu_oder, "%d ", k);
-					fprintf(out_permu_ori, "%d ", ori);
-					break;
-				}
-			}
-		}
-		fprintf(out_permu_oder, "\n");
-		fprintf(out_permu_ori, "\n");
-
-#ifdef PRINT_ADJ_LIST
-		for (int j = 0; j < total_permu; j++) printf("(%d, %d) ", permu_order[j], permu_ori[j]);
-		printf("\n");
-#endif
-		delete[] permu_order;
-		delete[] permu_ori;
-	}
+    if (is_auto_mode)
+    {
+        for (int i = 0; i < 26; i++)
+        {
+            char ch = i + 'A';
+            construct_cycle(ch, plain, cipher, text_len);
+            find_pair_write_to_file(plain, cipher, text_len, out_permu_oder, out_permu_ori);
+        }
+    }
+    else
+    {
+        construct_cycle(start_letter, plain, cipher, text_len);
+        find_pair_write_to_file(plain, cipher, text_len, out_permu_oder, out_permu_ori);   
+    }
 
 	if (plain)
 		free(plain);
