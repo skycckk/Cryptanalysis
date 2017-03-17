@@ -33,18 +33,25 @@ SRC3 = find_cycles.cpp
 TARGET3 = Find_cycles
 PERMU_ORDER_FILE = permu_order.txt
 PERMU_ORI_FILE = permu_ori.txt
+START_LETTER = E
 
-TARGET_CIPHER_FILE = cipher_target.txt
+SRC4 = attack.c
+TARGET4 = Attack
+KEY_OUTPUT = key_output.txt
+
+TARGET_CIPHER_FILE = cipher.txt
 
 PARAMS1 = $(ROTORS) $(ORIENTATION) $(INIT) $(IN_FILE) $(OUT_FILE)
 PARAMS2 = $(OUT_FILE) $(TARGET_CIPHER_FILE)
 PARAMS3 = $(IN_FILE) $(TARGET_CIPHER_FILE) $(PERMU_ORDER_FILE) $(PERMU_ORI_FILE)
+PARAMS4 = $(PERMU_ORDER_FILE) $(PERMU_ORI_FILE) $(KEY_OUTPUT)
 
 RUN_TYPEX = ./$(TARGET1) $(PARAMS1)
 RUN_VERIFY = ./$(TARGET2) $(PARAMS2)
 RUN_CYCLE = ./$(TARGET3) $(PARAMS3)
+RUN_ATTACK = ./$(TARGET4) $(PARAMS4)
 
-.PHONY: all typex verify find_cycle clean run
+.PHONY: all typex verify find_cycle attack clean run
 all: typex verify
 
 typex: $(SRC1)
@@ -55,6 +62,9 @@ verify: $(SRC2)
 
 find_cycle: $(SRC3)
 	@$(CXX) $(SRC3) -o $(TARGET3)
+
+attack: $(SRC4)
+	@$(CC) $(SRC4) -o $(TARGET4)
 
 clean:
 	@$(RM) $(OBJ)
@@ -72,5 +82,8 @@ runVerify:
 
 runCycle:
 	@$(RUN_CYCLE)
+
+runAttack:
+	@$(RUN_ATTACK)
 
 rerun: clean all run
