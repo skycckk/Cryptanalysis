@@ -47,12 +47,11 @@ char letter[26] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
                    "BDFHJLCPRTXVZNYEIWGAKMUSQO",
                    "ESOVPZJAYQUIRHXLNFTGKDCMWB",
                    "VZBRGITYUPSDNHLXAWMJQOFECK",
-                   "FVPJIAOYEDRZXWGCTKUQSBNMHL",
+                   "FVPJIAOYEDRZXWGCTKUQSBNMHL", // FVPJIAOYEDRZXWGCTKUQSBNMHL
                    "KZGLIUCJEHADXRYWVTNSFQPMOB",
                    "ZLVGOIFTYWUEPMABNCXRQSDKHJ"},
      ref[26] = "YRUHQSLDPXNGOKMIEBFZCWVJAT",// only 1 reflector
      step[9] = "ACEINQTVY";// 9 notches on each rotor (same positions on all rotors)
-
 
 int stepRotor (int pos, int n, int rev) {
     int t;
@@ -355,7 +354,7 @@ void simulator (int init_L, int init_M, int init_R, int init_LS, int init_RS) {
 #endif
 		// encryption/decryption result
         // Reflector <- L <- M <- R <- LS <- RS <- inChar
-        // Reflector -> L -> M -> R -> LS -> RS -> outChar 
+        // Reflector -> L -> M -> R -> LS -> RS -> outChar
         // int RS_val = RS[init_RS][inChar];
         // int LS_val = LS[init_LS][RS_val];
         // int R_val = R[cur_R][LS_val];

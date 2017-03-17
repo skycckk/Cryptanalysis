@@ -148,7 +148,7 @@ void construct_cycle(char starting_letter, char *plain, char *cipher, int text_l
 #endif	
 }
 
-void find_pair_write_to_file(char *plain, char *cipher, int text_len, FILE *out_order, FILE *out_ori)
+void find_pair_write_to_file(char start_letter, char *plain, char *cipher, int text_len, FILE *out_order, FILE *out_ori)
 {
     // from each cycle, calculate directions from pairs
     // output:
@@ -160,12 +160,15 @@ void find_pair_write_to_file(char *plain, char *cipher, int text_len, FILE *out_
     //  outChar: B C D B C D
     //  Cycle from 'C': C->B->A->D->C would output
     //  permu_order:  3  0  2  4
-    //    permu_ori:  0  1  0  1     
+    //    permu_ori:  0  1  0  1 
     for (int i = 0; i < result.size(); i++)
     {
         std::vector<int> cycle = result[i];
         int cycle_size = (int)cycle.size();
         if (cycle_size <= 3) continue;
+
+        fprintf(out_order, "%c ", start_letter);
+        fprintf(out_ori, "%c ", start_letter);
 
         int total_permu = cycle_size - 1;
         int *permu_order = new int[total_permu];
@@ -276,13 +279,13 @@ int main(int argc, const char *argv[])
         {
             char ch = i + 'A';
             construct_cycle(ch, plain, cipher, text_len);
-            find_pair_write_to_file(plain, cipher, text_len, out_permu_oder, out_permu_ori);
+            find_pair_write_to_file(ch, plain, cipher, text_len, out_permu_oder, out_permu_ori);
         }
     }
     else
     {
         construct_cycle(start_letter, plain, cipher, text_len);
-        find_pair_write_to_file(plain, cipher, text_len, out_permu_oder, out_permu_ori);   
+        find_pair_write_to_file(start_letter, plain, cipher, text_len, out_permu_oder, out_permu_ori);   
     }
 
 	if (plain)
