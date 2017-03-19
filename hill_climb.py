@@ -48,7 +48,7 @@ def score():
 	score = 0
 	for i in range(cipher_len):
 		if p_cipher[i] is CIPHER[i]:
-			print(CIPHER[i], i)
+			# print(CIPHER[i], i)
 			score += 1
 	f.close()
 	return score
@@ -65,21 +65,58 @@ def get_command():
 	]
 	return cmd_array
 
-best = 0
-test_counter = 0
+# best = 0
+# test_counter = 0
+# best_cmd = ''
 
-# while(best < cipher_len):
-while(test_counter < 10):
-	# puts a space between each argument
-	command = ' '.join(get_command())
-	print(command)
-	# spawn new process
-	result = subprocess.Popen(command, shell=True,
-		                           stdout=subprocess.PIPE, 
-		                           stderr=subprocess.STDOUT)
-	# wait for process to finish executing
-	result.wait()
-	print(score())
-	# increment things TODO
-	lp += 1
-	test_counter += 1
+# # while(best < cipher_len):
+# while(test_counter < 10):
+# 	# puts a space between each argument
+# 	command = ' '.join(get_command())
+# 	print(command)
+# 	# spawn new process
+# 	result = subprocess.Popen(command, shell=True,
+# 		                           stdout=subprocess.PIPE, 
+# 		                           stderr=subprocess.STDOUT)
+# 	# wait for process to finish executing
+# 	result.wait()
+# 	print(score())
+# 	# increment things TODO
+# 	lp += 1
+# 	test_counter += 1
+
+
+# brute force ------------------------------------------------------------------------
+best = 0
+best_cmd = ''
+
+for i in range(len(STATORS)):
+	ls = i
+	for j in range(len(STATORS)):
+		# the stators must be different from each other
+		if j is not i:
+			rs = j
+			for k in range(len(ORIENTATIONS)):
+				lo = k
+				for l in range(len(ORIENTATIONS)):
+					ro = l
+					for m in range(len(ALPHA)):
+						lp = m
+						for n in range(len(ALPHA)):
+							rp = n
+							command = ' '.join(get_command())
+							print(command)
+							# spawn new process
+							result = subprocess.Popen(command, shell=True,
+								                           stdout=subprocess.PIPE, 
+								                           stderr=subprocess.STDOUT)
+							# wait for process to finish executing
+							result.wait()
+							current_score = score()
+							if current_score >= best:
+								best = current_score
+								best_cmd = command
+								# print(current_score,i,j,k,l,m,n)
+
+print(best_cmd)
+
