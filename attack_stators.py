@@ -59,7 +59,7 @@ def get_command():
 		loc,
 		ROTORS + STATORS[ls] + STATORS[rs],
 		ORIENTATION + ORIENTATIONS[lo] + ORIENTATIONS[ro],
-		POS1 + ALPHA[lp]  + ALPHA[rp],
+		POS2 + ALPHA[lp]  + ALPHA[rp],
 		infile,
 		outfile
 	]
@@ -117,6 +117,26 @@ for i in range(len(STATORS)):
 								best = current_score
 								best_cmd = command
 								# print(current_score,i,j,k,l,m,n)
+							if current_score is cipher_len:
+								break
+						else:
+							continue
+						break
+					else:
+						continue
+					break
+				else:
+					continue
+				break
+			else:
+				continue
+			break
+		else:
+			continue
+		break
+	else:
+		continue
+	break
 
-print(best_cmd)
+print('Completed:', best_cmd)
 
