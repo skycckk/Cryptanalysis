@@ -10,7 +10,7 @@
 - Python3
 ```
 $> brew install gcc48
-#> brew install python3
+$> brew install python3
 ```
 
 
@@ -20,7 +20,7 @@ $> brew install gcc48
 $> make
 ```
 
-- Encryp/decryp
+- Encrypt/decrypt
 ```
 $> make runTypex
 ```
