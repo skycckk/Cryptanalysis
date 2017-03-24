@@ -39,7 +39,7 @@ SRC4 = attack.c
 TARGET4 = Attack
 KEY_OUTPUT = key_output.txt
 
-TARGET_CIPHER_FILE = cipher.txt
+TARGET_CIPHER_FILE = cipher_target.txt
 
 PARAMS1 = $(ROTORS) $(ORIENTATION) $(INIT) $(IN_FILE) $(OUT_FILE)
 PARAMS2 = $(OUT_FILE) $(TARGET_CIPHER_FILE)
